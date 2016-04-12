@@ -4,34 +4,16 @@ import time
 from sklearn.neighbors import NearestNeighbors
 from scipy.sparse import csr_matrix, find
 
-def run_diffusion_map(scdata, knn=10, epsilon=1, 
-        n_diffusion_components=10, n_pca_components=15, markers=None, normalization='markov'):
-    """ Run diffusion maps on the data. Run on the principal component projections
-    for single cell RNA-seq data and on the expression matrix for mass cytometry data
+def run_diffusion_map(data, knn=10, normalization='markov', epsilon=1, 
+        n_diffusion_components=10):
+    """ Run diffusion maps on the data.
     :param knn: Number of neighbors for graph construction to determine distances between cells
+    :param normalization: Normalization method
     :param epsilon: Gaussian standard deviation for converting distances to affinities
     :param n_diffusion_components: Number of diffusion components to Generalte
-    :param n_pca_components: Number of components to use for running tSNE for single cell 
-    RNA-seq data. Ignored for mass cytometry
-    :return: None
+    :return: Dictionary containing normalization matrix, weight matrix, 
+             diffusion eigen vectors, and diffusion eigen values
     """
-
-    data = deepcopy(scdata)
-    if scdata.data_type == 'sc-seq':
-        if scdata.pca is None:
-            raise RuntimeError('Please run PCA using run_pca before running diffusion maps for single cell RNA-seq')
-
-        data = deepcopy(scdata)
-        data -= np.min(np.ravel(data))
-        data /= np.max(np.ravel(data))
-        data = pd.DataFrame(np.dot(data, scdata.pca['loadings'].iloc[:, 0:n_pca_components]),
-                            index=data.index)
-
-    if markers is None:
-        markers = scdata.columns
-
-    if data.data_type == 'masscyt':
-        data = deepcopy(scdata[markers])
 
     # Nearest neighbors
     N = data.shape[0]
@@ -158,6 +140,7 @@ def run_diffusion_map(scdata, knn=10, epsilon=1,
         V[:, i] = V[:, i] / norm(V[:, i])
     V = np.round(V, 10)
 
-    # Update object
+    # Return
+    res = {'T': T, 'W': W, 'EigenVectors': V, 'EigenValues': D}
     scdata.diffusion_eigenvectors = pd.DataFrame(V, index=scdata.data.index)
     scdata.diffusion_eigenvalues = pd.DataFrame(D)
