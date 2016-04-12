@@ -15,6 +15,6 @@ All the dependencies will be automatrically installed using the above commands
 
 #### Usage
 1. After installation, GraphDiffusion can be used with the following commands
-2.
+
 		$> import GraphDiffusion
 		$> res = GraphDiffusion.graph_diffusion.run_diffusion_map(...)
