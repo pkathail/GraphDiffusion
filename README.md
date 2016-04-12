@@ -6,7 +6,7 @@ GraphDiffusion is a python package based on the DiffusionGeometry library in Mat
 #### Installation and dependencies
 1. GraphDiffusion has been implemented in Python3 and can be installed using
 
-		$> git clone git://github.com/pkathail/GraphDiffusion.git
+		$> git clone git@github.com:pkathail/GraphDiffusion.git
 		$> cd GraphDiffusion
 		$> sudo pip3 install
 
