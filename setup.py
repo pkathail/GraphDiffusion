@@ -11,5 +11,5 @@ setup(name='GraphDiffusion',
           'numpy>=1.10.0',
           'pandas>=0.18.0',
           'scipy>=0.14.0',
-          'sklearn'],
+          'sklearn']
       )
