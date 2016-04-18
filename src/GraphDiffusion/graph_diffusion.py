@@ -3,6 +3,8 @@ import pandas as pd
 import time
 from sklearn.neighbors import NearestNeighbors
 from scipy.sparse import csr_matrix, find
+from scipy.sparse.linalg import eigs
+from numpy.linalg import norm
 
 def run_diffusion_map(data, knn=10, normalization='markov', 
                       epsilon=1, n_diffusion_components=10):
@@ -47,12 +49,14 @@ def run_diffusion_map(data, knn=10, normalization='markov',
     D = np.ravel(W.sum(axis = 1))
     D[D!=0] = 1/D[D!=0]
 
+    P = []
+
     #Go through the various normalizations
     start = time.process_time()
-	if normalization == 'bimarkov':
+    if normalization == 'bimarkov':
         print('(bimarkov) ... ')
         # T = Bimarkov(W);
-	elif normalization == 'smarkov':
+    elif normalization == 'smarkov':
         print('(symmetric markov) ... ')
 
         D = csr_matrix((np.sqrt(D), (range(N), range(N))),  shape=[N, N])
@@ -61,12 +65,12 @@ def run_diffusion_map(data, knn=10, normalization='markov',
 
         T = (T + T.T) / 2
     
-	elif normalization == 'markov':
+    elif normalization == 'markov':
         print('(markov) ... ')
 
         T = csr_matrix((D, (range(N), range(N))), shape=[N, N]).dot(W)
     
-	elif normalization == 'sbeltrami':
+    elif normalization == 'sbeltrami':
         print('(symmetric beltrami) ... ')
     
         P = csr_matrix((D, (range(N), range(N))), shape=[N, N])
@@ -79,9 +83,9 @@ def run_diffusion_map(data, knn=10, normalization='markov',
         P = D
         T = D.dot(K).dot(D)
 
-        T = (T + T.T) / 2	# iron out numerical wrinkles
+        T = (T + T.T) / 2    # iron out numerical wrinkles
     
-	elif normalization == 'beltrami':
+    elif normalization == 'beltrami':
         print('(beltrami) ... ')
 
         D = csr_matrix((D, (range(N), range(N))), shape=[N, N])
@@ -93,7 +97,7 @@ def run_diffusion_map(data, knn=10, normalization='markov',
         V = csr_matrix((D, (range(N), range(N))), shape=[N, N])
         T = V.dot(K)
     
-	elif normalization == 'FokkerPlanck':
+    elif normalization == 'FokkerPlanck':
         print('(FokkerPlanck) ... ')
     
         D = csr_matrix((np.sqrt(D), (range(N), range(N))),  shape=[N, N])
@@ -105,7 +109,7 @@ def run_diffusion_map(data, knn=10, normalization='markov',
         D = csr_matrix((D, (range(N), range(N))), shape=[N, N])
         T = D.dot(K)
     
-	elif normalization == 'sFokkerPlanck':
+    elif normalization == 'sFokkerPlanck':
         print('(sFokkerPlanck) ... ')
 
         D = csr_matrix((np.sqrt(D), (range(N), range(N))),  shape=[N, N])
@@ -120,11 +124,11 @@ def run_diffusion_map(data, knn=10, normalization='markov',
     
         T = (T + T.T) / 2
 
-	else:
+    else:
         print('\nGraphDiffusion:Warning: unknown normalization.')
         return
 
-	if normalization != 'bimarkov':
+    if normalization != 'bimarkov':
         print('%.2f seconds' % (time.process_time()-start))
 
     # Eigen value decomposition
@@ -134,7 +138,8 @@ def run_diffusion_map(data, knn=10, normalization='markov',
     inds = np.argsort(D)[::-1]
     D = D[inds]
     V = V[:, inds]
-    V = P.dot(V)
+    if len(P) > 0:
+        V = P.dot(V)
 
     # Normalize
     for i in range(V.shape[1]):
