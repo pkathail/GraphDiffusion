@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(name='GraphDiffusion',
       version='1.0',
-      description='Wishbone algorithm for identifying bifurcating trajectories from single-cell data',
+      description='python package based on the DiffusionGeometry library in Matlab (https://services.math.duke.edu/~mauro/code.html#DiffusionGeom)',
       author='Pooja Kathail',
       author_email='pk2485@columbia.edu',
       package_dir={'': 'src'},
