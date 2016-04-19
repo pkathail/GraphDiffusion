@@ -5,6 +5,8 @@ from sklearn.neighbors import NearestNeighbors
 from scipy.sparse import csr_matrix, find
 from scipy.sparse.linalg import eigs
 from numpy.linalg import norm
+from GraphDiffusion.bimarkov import bimarkov
+from GraphDiffusion.GetEigs import GetEigs
 
 def run_diffusion_map(data, knn=10, normalization='markov', 
                       epsilon=1, n_diffusion_components=10):
@@ -55,7 +57,8 @@ def run_diffusion_map(data, knn=10, normalization='markov',
     start = time.process_time()
     if normalization == 'bimarkov':
         print('(bimarkov) ... ')
-        # T = Bimarkov(W);
+        T = bimarkov(W)
+
     elif normalization == 'smarkov':
         print('(symmetric markov) ... ')
 
@@ -125,25 +128,12 @@ def run_diffusion_map(data, knn=10, normalization='markov',
         T = (T + T.T) / 2
 
     else:
-        print('\nGraphDiffusion:Warning: unknown normalization.')
-        return
+        raise RuntimeError("unknown normaliztion")
 
     if normalization != 'bimarkov':
         print('%.2f seconds' % (time.process_time()-start))
 
     # Eigen value decomposition
-    D, V = eigs(T, n_diffusion_components, tol=1e-4, maxiter=1000)
-    D = np.real(D)
-    V = np.real(V)
-    inds = np.argsort(D)[::-1]
-    D = D[inds]
-    V = V[:, inds]
-    if len(P) > 0:
-        V = P.dot(V)
-
-    # Normalize
-    for i in range(V.shape[1]):
-        V[:, i] = V[:, i] / norm(V[:, i])
-    V = np.round(V, 10)
+    V, D = GetEigs(T, n_diffusion_components, P, take_diagonal=1)
 
     return {'T': T, 'W': W, 'EigenVectors': V, 'EigenValues': D}
