@@ -17,7 +17,7 @@ def GetEigs(T, k, P, take_diagonal=0):
 	inds = np.argsort(D)[::-1]
 	D = D[inds]
 	V = V[:, inds]
-	if len(P) > 0:
+	if P is not None:
 	    V = P.dot(V)
 
 	# Normalize
