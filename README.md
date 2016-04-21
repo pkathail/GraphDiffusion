@@ -21,7 +21,8 @@ After installation, GraphDiffusion can be used with the following commands
 
 where `data` is a `N x D` matrix representing `N` points in `R ^ D`, `knn` is the number of nearest neighbors, `normalization` is the method for normalizing weights. Please refer to the docstring for more details. 
 
-`res` is dictionary with the following objects
+`res` is dictionary with the following objects:
+
 1. `T`: `N x N` sparse matrix giving the normalized diffusion operator
 2. `W`: `N x N` sparse matrix of weights
 3. `EigenVectors`: Eigen vectors of matrix `T`
