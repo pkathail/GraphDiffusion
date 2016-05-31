@@ -32,7 +32,7 @@ def bimarkov(K, max_iters=100, abs_error=0.00001):
 	# iterative
 	for i in range(max_iters):
 
-		S = np.ravel(S.sum(axis = 1)).toarray()
+		S = np.ravel(W.sum(axis = 1))
 		err = np.max(np.absolute(1.0-np.max(S)), np.absolute(1.0-np.min(S)))
 
 		print('iter %03d error: 1e%1.4f', i, np.log10(err))
@@ -44,7 +44,7 @@ def bimarkov(K, max_iters=100, abs_error=0.00001):
 			break
 
 		D = csr_matrix((np.divide(1, np.sqrt(S)), (range(N), range(N))), shape=[N, N])
-		p = S.dot(p)
+		p *= S 
 		K = D.dot(K).dot(D)
 
 		if np.log10(err) < 0:
