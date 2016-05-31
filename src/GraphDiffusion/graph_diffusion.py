@@ -8,18 +8,38 @@ from numpy.linalg import norm
 from GraphDiffusion.bimarkov import bimarkov
 from GraphDiffusion.GetEigs import GetEigs
 
-def run_diffusion_map(data, knn=10, normalization='markov', 
+def run_diffusion_map(data, knn=10, normalization='smarkov', 
                       epsilon=1, n_diffusion_components=10):
-    """ Run diffusion maps on the data.
+    """ Run diffusion maps on the data. This implementation is based on the 
+        diffusion geometry library in Matlab: https://services.math.duke.edu/~mauro/code.html#DiffusionGeom
+    :param data: Data matrix of samples X features
     :param knn: Number of neighbors for graph construction to determine distances between cells
-    :param normalization: Normalization method
+    :param normalization: method for normalizing the matrix of weights
+         'bimarkov'            force row and column sums to be 1
+         'markov'              force row sums to be 1
+         'smarkov'             symmetric conjugate to markov
+         'beltrami'            Laplace-Beltrami normalization ala Coifman-Lafon
+         'sbeltrami'           symmetric conjugate to beltrami
+         'FokkerPlanck'        Fokker-Planck normalization
+         'sFokkerPlanck'       symmetric conjugate to Fokker-Planck normalization
     :param epsilon: Gaussian standard deviation for converting distances to affinities
-    :param n_diffusion_components: Number of diffusion components to Generalte
-    :return: Dictionary containing normalization matrix, weight matrix, 
+    :param n_diffusion_components: Number of diffusion components to generate
+    :return: Dictionary containing diffusion operator, weight matrix, 
              diffusion eigen vectors, and diffusion eigen values
     """
 
+    if normalization not in ['bimarkov', 'smarkov', 'markov', 'sbeltrami', 'beltrami',
+        'FokkerPlanck', 'sFokkerPlanck']:
+        raise RuntimeError('Unsupported normalization. Please refer to the docstring for the supported methods')
+
+    # Log
+    print('Running Diffusion maps with the following parameters:')
+    print('Normalization: %s' % normalization)
+    print('Number of nearest neighbors k: %d' % knn)
+    print('Epsilon: %.4f' % epsilon)
+
     # Nearest neighbors
+    start = time.process_time()
     N = data.shape[0]
     nbrs = NearestNeighbors(n_neighbors=knn).fit(data)
     distances, indices = nbrs.kneighbors(data)
@@ -51,10 +71,9 @@ def run_diffusion_map(data, knn=10, normalization='markov',
     D = np.ravel(W.sum(axis = 1))
     D[D!=0] = 1/D[D!=0]
 
-    P = []
+    P = None
 
     #Go through the various normalizations
-    start = time.process_time()
     if normalization == 'bimarkov':
         print('(bimarkov) ... ')
         T = bimarkov(W)
@@ -128,7 +147,7 @@ def run_diffusion_map(data, knn=10, normalization='markov',
         T = (T + T.T) / 2
 
     else:
-        raise RuntimeError("unknown normaliztion")
+        raise RuntimeError("unknown normalization")
 
     if normalization != 'bimarkov':
         print('%.2f seconds' % (time.process_time()-start))

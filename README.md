@@ -14,7 +14,16 @@ GraphDiffusion is a python package based on the DiffusionGeometry library in Mat
 All the dependencies will be automatrically installed using the above commands
 
 #### Usage
-1. After installation, GraphDiffusion can be used with the following commands
+After installation, GraphDiffusion can be used with the following commands
 
 		$> import GraphDiffusion
-		$> res = GraphDiffusion.graph_diffusion.run_diffusion_map(...)
+		$> res = GraphDiffusion.graph_diffusion.run_diffusion_map(data, knn=10, normalization='smarkov')
+
+where `data` is a `N x D` matrix representing `N` points in `R ^ D`, `knn` is the number of nearest neighbors, `normalization` is the method for normalizing weights. Please refer to the docstring for more details. 
+
+`res` is dictionary with the following objects:
+
+1. `T`: `N x N` sparse matrix giving the normalized diffusion operator
+2. `W`: `N x N` sparse matrix of weights
+3. `EigenVectors`: Eigen vectors of matrix `T`
+4. `EigenValues`: Eigen values of matrix `T`
