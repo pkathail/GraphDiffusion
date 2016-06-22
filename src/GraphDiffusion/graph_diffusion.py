@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import time
 from sklearn.neighbors import NearestNeighbors
-from scipy.sparse import csr_matrix, find
+from scipy.sparse import csr_matrix, find, issparse
 from scipy.sparse.linalg import eigs
 from numpy.linalg import norm
 from GraphDiffusion.bimarkov import bimarkov
@@ -35,37 +35,43 @@ def run_diffusion_map(data, knn=10, normalization='smarkov',
     # Log
     print('Running Diffusion maps with the following parameters:')
     print('Normalization: %s' % normalization)
-    print('Number of nearest neighbors k: %d' % knn)
-    print('Epsilon: %.4f' % epsilon)
 
-    # Nearest neighbors
-    start = time.process_time()
-    N = data.shape[0]
-    nbrs = NearestNeighbors(n_neighbors=knn).fit(data)
-    distances, indices = nbrs.kneighbors(data)
+    #Check if sparse, square matrix was input and treat as W
+    if issparse(data) and data.shape[0] == data.shape[1]:
+        W = data
+        
+    else:
+        print('Number of nearest neighbors k: %d' % knn)
+        print('Epsilon: %.4f' % epsilon)
 
-    # Adjacency matrix
-    rows = np.zeros(N * knn, dtype=np.int32)
-    cols = np.zeros(N * knn, dtype=np.int32)
-    dists = np.zeros(N * knn)
-    location = 0
-    for i in range(N):
-        inds = range(location, location + knn)
-        rows[inds] = indices[i, :]
-        cols[inds] = i
-        dists[inds] = distances[i, :]
-        location += knn
-    W = csr_matrix( (dists, (rows, cols)), shape=[N, N] )
+        # Nearest neighbors
+        start = time.process_time()
+        N = data.shape[0]
+        nbrs = NearestNeighbors(n_neighbors=knn).fit(data)
+        distances, indices = nbrs.kneighbors(data)
 
-    # Symmetrize W
-    W = W + W.T
+        # Adjacency matrix
+        rows = np.zeros(N * knn, dtype=np.int32)
+        cols = np.zeros(N * knn, dtype=np.int32)
+        dists = np.zeros(N * knn)
+        location = 0
+        for i in range(N):
+            inds = range(location, location + knn)
+            rows[inds] = indices[i, :]
+            cols[inds] = i
+            dists[inds] = distances[i, :]
+            location += knn
+        W = csr_matrix( (dists, (rows, cols)), shape=[N, N] )
 
-    # Convert to affinity (with selfloops)
-    rows, cols, dists = find(W)
-    rows = np.append(rows, range(N))
-    cols = np.append(cols, range(N))
-    dists = np.append(dists/(epsilon ** 2), np.zeros(N))
-    W = csr_matrix( (np.exp(-dists), (rows, cols)), shape=[N, N] )
+        # Symmetrize W
+        W = W + W.T
+
+        # Convert to affinity (with selfloops)
+        rows, cols, dists = find(W)
+        rows = np.append(rows, range(N))
+        cols = np.append(cols, range(N))
+        dists = np.append(dists/(epsilon ** 2), np.zeros(N))
+        W = csr_matrix( (np.exp(-dists), (rows, cols)), shape=[N, N] )
 
     # Create D
     D = np.ravel(W.sum(axis = 1))
