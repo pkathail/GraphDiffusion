@@ -36,8 +36,11 @@ def run_diffusion_map(data, knn=10, normalization='smarkov',
     print('Running Diffusion maps with the following parameters:')
     print('Normalization: %s' % normalization)
 
+    start = time.process_time()
+    N = data.shape[0]
     #Check if sparse, square matrix was input and treat as W
     if issparse(data) and data.shape[0] == data.shape[1]:
+        print('Using precomputed affinity matrix')
         W = data
         
     else:
@@ -45,8 +48,6 @@ def run_diffusion_map(data, knn=10, normalization='smarkov',
         print('Epsilon: %.4f' % epsilon)
 
         # Nearest neighbors
-        start = time.process_time()
-        N = data.shape[0]
         nbrs = NearestNeighbors(n_neighbors=knn).fit(data)
         distances, indices = nbrs.kneighbors(data)
 
