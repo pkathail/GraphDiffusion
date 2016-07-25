@@ -9,7 +9,7 @@ from GraphDiffusion.bimarkov import bimarkov
 from GraphDiffusion.GetEigs import GetEigs
 
 def run_diffusion_map(data, knn=10, normalization='smarkov', 
-                      epsilon=1, n_diffusion_components=10):
+                      epsilon=1, n_diffusion_components=10, distance_metric='minkowski'):
     """ Run diffusion maps on the data. This implementation is based on the 
         diffusion geometry library in Matlab: https://services.math.duke.edu/~mauro/code.html#DiffusionGeom
     :param data: Data matrix of samples X features
@@ -48,7 +48,7 @@ def run_diffusion_map(data, knn=10, normalization='smarkov',
         print('Epsilon: %.4f' % epsilon)
 
         # Nearest neighbors
-        nbrs = NearestNeighbors(n_neighbors=knn).fit(data)
+        nbrs = NearestNeighbors(n_neighbors=knn, metric=distance_metric).fit(data)
         distances, indices = nbrs.kneighbors(data)
 
         # Adjacency matrix
