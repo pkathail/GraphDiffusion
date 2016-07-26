@@ -62,17 +62,22 @@ def run_diffusion_map(data, knn=10, normalization='smarkov',
             cols[inds] = i
             dists[inds] = distances[i, :]
             location += knn
-        W = csr_matrix( (dists, (rows, cols)), shape=[N, N] )
+        if epsilon > 0:
+            W = csr_matrix( (dists, (rows, cols)), shape=[N, N] )
+        else:
+            print('epsilon=0!!')
+            W = csr_matrix( (np.ones(dists.shape), (rows, cols)), shape=[N, N] )
 
         # Symmetrize W
         W = W + W.T
 
-        # Convert to affinity (with selfloops)
-        rows, cols, dists = find(W)
-        rows = np.append(rows, range(N))
-        cols = np.append(cols, range(N))
-        dists = np.append(dists/(epsilon ** 2), np.zeros(N))
-        W = csr_matrix( (np.exp(-dists), (rows, cols)), shape=[N, N] )
+        if epsilon > 0:
+            # Convert to affinity (with selfloops)
+            rows, cols, dists = find(W)
+            rows = np.append(rows, range(N))
+            cols = np.append(cols, range(N))
+            dists = np.append(dists/(epsilon ** 2), np.zeros(N))
+            W = csr_matrix( (np.exp(-dists), (rows, cols)), shape=[N, N] )
 
     # Create D
     D = np.ravel(W.sum(axis = 1))
