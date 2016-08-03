@@ -9,7 +9,8 @@ from GraphDiffusion.bimarkov import bimarkov
 from GraphDiffusion.GetEigs import GetEigs
 
 def run_diffusion_map(data, knn=10, normalization='smarkov', 
-                      epsilon=1, n_diffusion_components=10, distance_metric='minkowski'):
+                      epsilon=1, n_diffusion_components=10, 
+                      distance_metric='minkowski', knn_autotune=0):
     """ Run diffusion maps on the data. This implementation is based on the 
         diffusion geometry library in Matlab: https://services.math.duke.edu/~mauro/code.html#DiffusionGeom
     :param data: Data matrix of samples X features
@@ -51,6 +52,16 @@ def run_diffusion_map(data, knn=10, normalization='smarkov',
         nbrs = NearestNeighbors(n_neighbors=knn, metric=distance_metric).fit(data)
         distances, indices = nbrs.kneighbors(data)
 
+        if knn_autotune > 0:
+            print('Autotuning distances')
+            for j in reversed(range(N)):
+                temp = sorted(distances[j])
+                lMaxTempIdxs = min(knn_autotune, len(temp))
+                if lMaxTempIdxs == 0 or temp[lMaxTempIdxs] == 0:
+                    distances[j] = 0
+                else:
+                    distances[j] = np.divide(distances[j], temp[lMaxTempIdxs])
+
         # Adjacency matrix
         rows = np.zeros(N * knn, dtype=np.int32)
         cols = np.zeros(N * knn, dtype=np.int32)
@@ -65,7 +76,6 @@ def run_diffusion_map(data, knn=10, normalization='smarkov',
         if epsilon > 0:
             W = csr_matrix( (dists, (rows, cols)), shape=[N, N] )
         else:
-            print('epsilon=0!!')
             W = csr_matrix( (np.ones(dists.shape), (rows, cols)), shape=[N, N] )
 
         # Symmetrize W
